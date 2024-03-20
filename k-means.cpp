@@ -1,124 +1,117 @@
 #include <iostream>
 #include <vector>
-#include <cmath>
-#include <limits>
+#include <cstdlib>  // For rand()
+#include <ctime>    // For time()
+#include <cmath>    // for math operations
 
 using namespace std;
 
-// Function to calculate Euclidean distance between two points
-double calculateDistance(vector<double>& point1, vector<double>& point2) 
+// Structure to represent a data point
+struct Point 
 {
-    double distance = 0.0;
-    for (size_t i = 0; i < point1.size(); ++i) 
-    {
-        distance += pow(point1[i] - point2[i], 2);
-    }
-    return sqrt(distance);
+    double x;
+    double y;
+};
+
+// Function to calculate Euclidean distance between two points
+double calculateDistance(Point p1, Point p2) 
+{
+    return sqrt(pow((p1.x - p2.x), 2) + pow((p1.y - p2.y), 2));
 }
 
-// Function to assign each point to its nearest centroid
-void assignClusters(vector<vector<double>>& data, vector<vector<double>>& centroids, vector<int>& clusterAssignments) 
+// Function to assign each point to the nearest centroid
+void assignPointsToCentroids(const vector<Point>& points, const vector<Point>& centroids, vector<int>& assignments) 
 {
-    for (size_t i = 0; i < data.size(); ++i) 
+    // Iterate through each data point
+    for (size_t i = 0; i < points.size(); ++i) 
     {
-        double minDistance = numeric_limits<double>::max();
-        int nearestCentroid = 0;
+        double minDist = numeric_limits<double>::max(); // Initialize minimum distance to maximum value
+        int closestCentroid = -1; // Initialize index of the closest centroid to an invalid value
+
+        // Iterate through each centroid to find the nearest one
         for (size_t j = 0; j < centroids.size(); ++j) 
         {
-            double distance = calculateDistance(data[i], centroids[j]);
-            if (distance < minDistance) 
-            {
-                minDistance = distance;
-                nearestCentroid = j;
+            double dist = calculateDistance(points[i], centroids[j]); // Calculate distance between point and centroid
+            if (dist < minDist) 
+            { // Check if current distance is smaller than minimum distance
+                minDist = dist; // Update minimum distance
+                closestCentroid = j; // Update index of closest centroid
             }
         }
-        clusterAssignments[i] = nearestCentroid;
+
+        assignments[i] = closestCentroid; // Assign the point to the nearest centroid
     }
 }
 
-// Function to update centroids based on assigned clusters
-void updateCentroids(vector<vector<double>>& data, vector<int>& clusterAssignments, vector<vector<double>>& centroids)
+// Function to update centroids based on the assigned points
+void updateCentroids(const vector<Point>& points, const vector<int>& assignments, vector<Point>& centroids) 
 {
-    vector<int> clusterCounts(centroids.size(), 0);
-    vector<vector<double>> newCentroids(centroids.size(), vector<double>(data[0].size(), 0.0));
+    vector<int> clusterSizes(centroids.size(), 0); // Initialize vector to store cluster sizes
+    vector<Point> newCentroids(centroids.size(), {0.0, 0.0}); // Initialize vector to store new centroids
 
-    // Sum up points assigned to each centroid
-    for (size_t i = 0; i < data.size(); ++i) 
+    // Iterate through each data point
+    for (size_t i = 0; i < points.size(); ++i) 
     {
-        int cluster = clusterAssignments[i];
-        for (size_t j = 0; j < data[i].size(); ++j) 
-        {
-            newCentroids[cluster][j] += data[i][j];
-        }
-        clusterCounts[cluster]++;
+        int cluster = assignments[i]; // Get the cluster assignment for the point
+        newCentroids[cluster].x += points[i].x; // Add the x-coordinate of the point to the corresponding cluster centroid
+        newCentroids[cluster].y += points[i].y; // Add the y-coordinate of the point to the corresponding cluster centroid
+        clusterSizes[cluster]++; // Increment the size of the cluster
     }
 
-    // Calculate new centroids by taking the average of points in each cluster
+    // Calculate the mean of each cluster to update the centroids
     for (size_t i = 0; i < centroids.size(); ++i) 
     {
-        for (size_t j = 0; j < centroids[i].size(); ++j) 
-        {
-            if (clusterCounts[i] != 0) 
-            {
-                newCentroids[i][j] /= clusterCounts[i];
-            }
+        if (clusterSizes[i] > 0) 
+        { // Check if the cluster has assigned points
+            centroids[i].x = newCentroids[i].x / clusterSizes[i]; // Update the x-coordinate of the centroid
+            centroids[i].y = newCentroids[i].y / clusterSizes[i]; // Update the y-coordinate of the centroid
         }
     }
-
-    centroids = newCentroids;
 }
 
-// Main K-means function
-vector<int> kMeans(vector<vector<double>>& data, int k) 
+// Function to perform K-means clustering
+vector<Point> kMeans(const vector<Point>& points, int k, int maxIterations) 
 {
-    // Randomly initialize centroids
-    vector<vector<double>> centroids;
-    for (int i = 0; i < k; ++i)
+    vector<Point> centroids(k); // Initialize centroids vector
+    vector<int> assignments(points.size()); // Initialize assignments vector
+
+    // Initialize centroids randomly
+    srand(time(nullptr));
+    for (int i = 0; i < k; ++i) 
     {
-        centroids.push_back(data[rand() % data.size()]);
+        int index = rand() % points.size(); // Randomly select an index from the points
+        centroids[i] = points[index]; // Set centroid to the randomly selected point
     }
 
-    vector<int> clusterAssignments(data.size(), 0);
-
-    // Run iterations until convergence
-    bool converged = false;
-    while (!converged) 
+    // Perform iterations
+    for (int iter = 0; iter < maxIterations; ++iter) 
     {
-        // Assign points to nearest centroid
-        assignClusters(data, centroids, clusterAssignments);
-
-        // Update centroids
-        std::vector<std::vector<double>> oldCentroids = centroids;
-        updateCentroids(data, clusterAssignments, centroids);
-
-        // Check for convergence
-        converged = (oldCentroids == centroids);
+        assignPointsToCentroids(points, centroids, assignments); // Assign each point to the nearest centroid
+        updateCentroids(points, assignments, centroids); // Update centroids based on the assigned points
     }
 
-    return clusterAssignments;
+    return centroids; // Return the final centroids
 }
 
-int main() 
-{
-    // Sample data
-    vector<vector<double>> data = 
-    {
-        {2.0, 3.0}, {2.0, 4.0}, {3.0, 5.0},
-        {7.0, 5.0}, {8.0, 5.0}, {7.0, 4.0},
-        {4.0, 1.0}, {3.0, 2.0}, {3.0, 1.0}
-    };
+int main() {
+    // Sample data points
+    vector<Point> points = {{1.0, 2.0}, {2.0, 3.0}, {3.0, 4.0}, {5.0, 6.0}, {7.0, 8.0},
+                        {1000.0, 1001.0}, {1001.0, 1002.0}, {1002.0, 1003.0}, {1004.0, 1005.0}, {1006.0, 1007.0}};
 
     // Number of clusters
-    int k = 2;
+    int k = 500;
+
+    // Maximum number of iterations
+    int maxIterations = 1000;
 
     // Perform K-means clustering
-    vector<int> clusterAssignments = kMeans(data, k);
+    vector<Point> centroids = kMeans(points, k, maxIterations);
 
-    // Output cluster assignments
-    cout << "Cluster assignments:\n";
-    for (size_t i = 0; i < data.size(); ++i) 
+    // Print centroids
+    cout << "Centroids:" << endl;
+    for (const auto& centroid : centroids) 
     {
-        cout << "(" << data[i][0] << ", " << data[i][1] << ") -> Cluster " << clusterAssignments[i] << endl;
+        cout << "(" << centroid.x << ", " << centroid.y << ")" << endl;
     }
 
     return 0;

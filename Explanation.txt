@@ -1,0 +1,34 @@
+Include Headers: We include necessary C++ headers such as <iostream>, <vector>, <cstdlib>, and <ctime>.
+
+Point Struct: We define a Point struct to represent a 2-dimensional data point with x and y coordinates.
+
+calculateDistance Function: This function calculates the Euclidean distance between two points using the formula: sqrt((x_2 - x_1)^2 + (y_2 - y_1)^2) 
+
+assignPointsToCentroids Function: This function assigns each data point to the nearest centroid based on Euclidean distance.
+
+updateCentroids Function: This function updates the centroids by calculating the mean of all data points assigned to each centroid.
+
+kMeans Function: This is the main K-means clustering function. It initializes centroids randomly, then iteratively assigns points to centroids and updates centroids until convergence or until reaching a maximum number of iterations.
+
+main Function: In the main function, we define some sample data points, specify the number of clusters (k), and the maximum number of iterations. We then call the kMeans function to perform K-means clustering and print the resulting centroids.
+
+Random Initialization: Centroids are initialized randomly using rand() function.
+
+Iteration: The algorithm iterates a fixed number of times (maxIterations). In each iteration, it assigns points to centroids and updates centroids accordingly.
+
+Output: Finally, the centroids calculated by the K-means algorithm are printed to the console.
+
+So, why is this implementation and inneficient?
+    - Random Initialization: The centroids are initialized randomly, which means there's no guarantee that they are close to the actual clusters. 
+        This can lead to slower convergence and potentially suboptimal clustering.
+    - Brute-Force Assignments: The assignPointsToCentroids function iterates through each data point and calculates its distance to each centroid. 
+        This brute-force approach results in a time complexity of O(n*k), where n is the number of data points and k is the number of clusters. 
+        This can be highly inefficient for large datasets and/or a large number of clusters.
+    - Full Data Point Updates: In the updateCentroids function, all data points are considered for each iteration to update the centroids. 
+        This approach can be computationally expensive, especially for large datasets, as it requires iterating through all data points for each iteration.
+    - No Convergence Criteria: The algorithm performs a fixed number of iterations (maxIterations) regardless of whether convergence has been reached. 
+        This can lead to unnecessary computations, especially if convergence is achieved before reaching the maximum number of iterations.
+    - Lack of Optimization Techniques: This implementation lacks optimization techniques such as using efficient data structures, 
+        early stopping criteria, or smart initialization methods (e.g., K-means++). These techniques can significantly improve the efficiency and convergence 
+        speed of the algorithm
+TLDR: This implementation sacrifices efficiency for simplicity.

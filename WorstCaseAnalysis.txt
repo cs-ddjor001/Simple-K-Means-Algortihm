@@ -1,0 +1,17 @@
+The worst-case time complexity of this implementation of K-means clustering is O(n * k * d * I), where n is the number of data points, 
+k is the number of clusters, d is the number of dimensions of data points, I is the maximum number of iterations. 
+
+Here's a breakdown of the complexity:
+In each iteration of the K-means algorithm, we have to iterate through all  n data points.
+For each data point, we calculate its distance to each of the k centroids, resulting in O(k * d). 
+Then, we update the centroids based on the assigned data points, which again requires iterating through all n points, 
+resulting in O (n * d) operations. The algorithm runs for a maximum of I iterations.
+
+Data sets that can cause a bottleneck:
+// Sample data points with potential bottleneck
+vector<Point> points = {{1.0, 2.0}, {2.0, 3.0}, {3.0, 4.0}, {5.0, 6.0}, {7.0, 8.0},
+                        {1000.0, 1001.0}, {1001.0, 1002.0}, {1002.0, 1003.0}, {1004.0, 1005.0}, {1006.0, 1007.0}};
+
+int k = 500;
+
+int maxIterations = 1000;
